@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Water Bottle Media - Get Bottle @ ₹1</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-950 text-white min-h-screen flex items-center justify-center p-4">
+
+  <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <span class="text-xs font-bold uppercase tracking-wider text-sky-400">Water Bottle Media</span>
+        <h1 class="text-xl font-extrabold">500ml Bottle @ ₹1</h1>
+      </div>
+      <span class="bg-emerald-500/20 text-emerald-400 text-xs font-bold px-3 py-1 rounded-full">100% Pure</span>
+    </div>
+
+    <!-- STEP 1: Mobile Verification -->
+    <div id="step1" class="space-y-4">
+      <p class="text-sm text-slate-300">Enter your 10-digit mobile number to unlock today's ₹1 bottle pass (Limit: 1 bottle/day).</p>
+      <input id="mobileInput" type="tel" maxlength="10" placeholder="Enter 10-digit mobile number"
+        class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-lg tracking-wider focus:outline-none focus:border-sky-500" />
+      <p id="errorMsg" class="text-rose-400 text-xs hidden"></p>
+      <button onclick="verifyMobile()" id="verifyBtn"
+        class="w-full bg-sky-500 hover:bg-sky-600 text-slate-950 font-extrabold py-3.5 rounded-xl transition">
+        Continue to 30s Video →
+      </button>
+    </div>
+
+    <!-- STEP 2: 30s Non-Skippable Video + YouTube CTA -->
+    <div id="step2" class="hidden space-y-4">
+      <div class="flex justify-between items-center text-xs">
+        <span id="brandBadge" class="text-sky-400 font-bold">Sponsored Ad</span>
+        <span id="timerBadge" class="bg-amber-500/20 text-amber-300 px-2.5 py-1 rounded-full font-bold">30s remaining</span>
+      </div>
+
+      <div class="relative rounded-2xl overflow-hidden bg-black aspect-video border border-slate-700">
+        <video id="adVideo" playsinline class="w-full h-full object-cover"></video>
+      </div>
+
+      <!-- YouTube Subscribe / Brand Action Button -->
+      <a id="ctaLink" href="#" target="_blank"
+        class="block w-full text-center bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl text-sm transition">
+        ▶ Subscribe on YouTube
+      </a>
+
+      <button id="toPayBtn" disabled onclick="goToPayment()"
+        class="w-full bg-slate-700 text-slate-400 font-extrabold py-3.5 rounded-xl cursor-not-allowed transition">
+        Watch Full Video to Unlock ₹1 Pay
+      </button>
+    </div>
+
+    <!-- STEP 3: ₹1 Direct UPI Payment -->
+    <div id="step3" class="hidden space-y-4 text-center">
+      <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4">
+        <p class="text-emerald-400 font-bold text-sm">Video Completed! ₹1 Offer Unlocked</p>
+        <p class="text-3xl font-black mt-1">₹1.00</p>
+      </div>
+      <a id="upiPayLink" href="#" onclick="showVoucherAfterDelay()"
+        class="block w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold py-4 rounded-xl text-base transition">
+        Pay ₹1 via GPay / PhonePe / Paytm
+      </a>
+      <button onclick="completeClaim()" class="text-xs text-slate-400 underline">
+        Already paid ₹1? Tap here to generate Pass
+      </button>
+    </div>
+
+    <!-- STEP 4: Shopkeeper Verification Pass -->
+    <div id="step4" class="hidden text-center space-y-4">
+      <div class="bg-gradient-to-br from-sky-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg">
+        <p class="text-xs uppercase tracking-widest opacity-80">Show to Shopkeeper</p>
+        <p id="passCodeDisplay" class="text-5xl font-black tracking-widest my-3">----</p>
+        <p id="passMeta" class="text-xs opacity-90"></p>
+      </div>
+      <p class="text-xs text-slate-400">Valid only today. Show this screen + ₹1 payment tick at counter.</p>
+    </div>
+
+    <div class="mt-6 pt-4 border-t border-slate-800 text-center text-[11px] text-slate-500">
+      Powered by Water Bottle Media • For Ads: 6379025071
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://todgaupejlrckrqfntih.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_8Q6QGQc1PPYs0QcoYXpQdg_nBT0HGSo";
+    const MY_UPI_ID = "sujivj317@okhdfcbank";
+
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let currentMobile = "";
+    let activeCampaign = null;
+    let watchedSeconds = 0;
+    let timerInterval = null;
+
+    async function verifyMobile() {
+      const mobile = document.getElementById("mobileInput").value.trim();
+      const err = document.getElementById("errorMsg");
+      if (!/^[6-9]\d{9}$/.test(mobile)) {
+        err.textContent = "Please enter a valid 10-digit Indian mobile number.";
+        err.classList.remove("hidden");
+        return;
+      }
+      err.classList.add("hidden");
+      document.getElementById("verifyBtn").textContent = "Checking...";
+
+      const today = new Date().toISOString().split("T")[0];
+      const { data: existing } = await db
+        .from("claims")
+        .select("*")
+        .eq("mobile_number", mobile)
+        .eq("claim_date", today);
+
+      if (existing && existing.length > 0) {
+        err.textContent = "Daily limit reached! You already claimed today's ₹1 bottle.";
+        err.classList.remove("hidden");
+        document.getElementById("verifyBtn").textContent = "Continue to 30s Video →";
+        return;
+      }
+
+      const { data: campaigns } = await db
+        .from("campaigns")
+        .select("*")
+        .eq("is_active", true)
+        .order("id", { ascending: true });
+
+      activeCampaign = campaigns?.find(c => c.views_count < c.max_views);
+      if (!activeCampaign) {
+        err.textContent = "No active ad campaigns right now. Please try shortly.";
+        err.classList.remove("hidden");
+        document.getElementById("verifyBtn").textContent = "Continue to 30s Video →";
+        return;
+      }
+
+      currentMobile = mobile;
+      startVideoStep();
+    }
+
+    function startVideoStep() {
+      document.getElementById("step1").classList.add("hidden");
+      document.getElementById("step2").classList.remove("hidden");
+
+      document.getElementById("brandBadge").textContent = "Ad: " + activeCampaign.brand_name;
+      const cta = document.getElementById("ctaLink");
+      cta.textContent = "▶ " + activeCampaign.cta_text;
+      cta.href = activeCampaign.cta_url;
+
+      const video = document.getElementById("adVideo");
+      video.src = activeCampaign.video_url;
+      video.play();
+
+      timerInterval = setInterval(() => {
+        if (!video.paused) {
+          watchedSeconds++;
+          const left = Math.max(0, 30 - watchedSeconds);
+          document.getElementById("timerBadge").textContent = left + "s remaining";
+
+          if (watchedSeconds >= 30) {
+            clearInterval(timerInterval);
+            const btn = document.getElementById("toPayBtn");
+            btn.disabled = false;
+            btn.className = "w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold py-3.5 rounded-xl cursor-pointer transition";
+            btn.textContent = "Proceed to ₹1 UPI Payment →";
+          }
+        }
+      }, 1000);
+    }
+
+    function goToPayment() {
+      document.getElementById("step2").classList.add("hidden");
+      document.getElementById("step3").classList.remove("hidden");
+
+      const upiUrl = `upi://pay?pa=${encodeURIComponent(MY_UPI_ID)}&pn=WaterBottleMedia&am=1.00&cu=INR&tn=Bottle_${currentMobile}`;
+      document.getElementById("upiPayLink").href = upiUrl;
+    }
+
+    function showVoucherAfterDelay() {
+      setTimeout(() => { completeClaim(); }, 4000);
+    }
+
+    async function completeClaim() {
+      const passCode = Math.floor(1000 + Math.random() * 9000).toString();
+      const today = new Date().toISOString().split("T")[0];
+
+      await db.from("claims").insert([{
+        mobile_number: currentMobile,
+        claim_date: today,
+        campaign_id: activeCampaign.id,
+        pass_code: passCode
+      }]);
+
+      await db.from("campaigns")
+        .update({ views_count: activeCampaign.views_count + 1 })
+        .eq("id", activeCampaign.id);
+
+      document.getElementById("step3").classList.add("hidden");
+      document.getElementById("step4").classList.remove("hidden");
+      document.getElementById("passCodeDisplay").textContent = passCode;
+      document.getElementById("passMeta").textContent = `${currentMobile} • ${today}`;
+    }
+  </script>
+</body>
+</html>
