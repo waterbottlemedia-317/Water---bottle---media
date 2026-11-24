@@ -10,7 +10,6 @@
 <body class="bg-slate-950 text-white min-h-screen flex items-center justify-center p-4">
 
   <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl">
-    <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <div>
         <span class="text-xs font-bold uppercase tracking-wider text-sky-400">Water Bottle Media</span>
@@ -39,10 +38,13 @@
       </div>
 
       <div class="relative rounded-2xl overflow-hidden bg-black aspect-video border border-slate-700">
-        <video id="adVideo" playsinline class="w-full h-full object-cover"></video>
+        <video id="adVideo" playsinline webkit-playsinline muted preload="auto" class="w-full h-full object-cover"></video>
+        <button id="soundBtn" onclick="enableSound()"
+          class="absolute bottom-3 right-3 bg-black/75 text-white text-xs font-bold px-3 py-1.5 rounded-full border border-white/20">
+          🔊 Tap for Sound
+        </button>
       </div>
 
-      <!-- YouTube Subscribe / Brand Action Button -->
       <a id="ctaLink" href="#" target="_blank"
         class="block w-full text-center bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl text-sm transition">
         ▶ Subscribe on YouTube
@@ -124,9 +126,9 @@
         .from("campaigns")
         .select("*")
         .eq("is_active", true)
-        .order("id", { ascending: true });
+        .order("id", { ascending: false });
 
-      activeCampaign = campaigns?.find(c => c.views_count < c.max_views);
+      activeCampaign = campaigns?.find(c => (c.views_count || 0) < c.max_views);
       if (!activeCampaign) {
         err.textContent = "No active ad campaigns right now. Please try shortly.";
         err.classList.remove("hidden");
@@ -149,7 +151,8 @@
 
       const video = document.getElementById("adVideo");
       video.src = activeCampaign.video_url;
-      video.play();
+      video.muted = true;
+      video.play().catch(() => {});
 
       timerInterval = setInterval(() => {
         if (!video.paused) {
@@ -166,6 +169,13 @@
           }
         }
       }, 1000);
+    }
+
+    function enableSound() {
+      const video = document.getElementById("adVideo");
+      video.muted = false;
+      video.play();
+      document.getElementById("soundBtn").classList.add("hidden");
     }
 
     function goToPayment() {
@@ -192,7 +202,7 @@
       }]);
 
       await db.from("campaigns")
-        .update({ views_count: activeCampaign.views_count + 1 })
+        .update({ views_count: (activeCampaign.views_count || 0) + 1 })
         .eq("id", activeCampaign.id);
 
       document.getElementById("step3").classList.add("hidden");
