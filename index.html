@@ -30,7 +30,7 @@
       </button>
     </div>
 
-    <!-- STEP 2: 30s Non-Skippable Video + YouTube CTA -->
+    <!-- STEP 2: Video + YouTube CTA -->
     <div id="step2" class="hidden space-y-4">
       <div class="flex justify-between items-center text-xs">
         <span id="brandBadge" class="text-sky-400 font-bold">Sponsored Ad</span>
@@ -71,14 +71,17 @@
       </button>
     </div>
 
-    <!-- STEP 4: Shopkeeper Verification Pass -->
+    <!-- STEP 4: Shopkeeper Verification Pass with Live Clock -->
     <div id="step4" class="hidden text-center space-y-4">
       <div class="bg-gradient-to-br from-sky-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg">
-        <p class="text-xs uppercase tracking-widest opacity-80">Show to Shopkeeper</p>
+        <div class="flex justify-between items-center text-[11px] uppercase tracking-wider opacity-90 mb-2">
+          <span>Verified Pass</span>
+          <span id="liveClock" class="bg-black/30 px-2 py-0.5 rounded font-mono font-bold">--:--:--</span>
+        </div>
         <p id="passCodeDisplay" class="text-5xl font-black tracking-widest my-3">----</p>
-        <p id="passMeta" class="text-xs opacity-90"></p>
+        <p id="passMeta" class="text-xs opacity-90 font-semibold"></p>
       </div>
-      <p class="text-xs text-slate-400">Valid only today. Show this screen + ₹1 payment tick at counter.</p>
+      <p class="text-xs text-slate-400">Show this live running screen + ₹1 payment tick at counter.</p>
     </div>
 
     <div class="mt-6 pt-4 border-t border-slate-800 text-center text-[11px] text-slate-500">
@@ -96,6 +99,19 @@
     let activeCampaign = null;
     let watchedSeconds = 0;
     let timerInterval = null;
+    let unlocked = false;
+
+    function unlockPaymentButton() {
+      if (unlocked) return;
+      unlocked = true;
+      clearInterval(timerInterval);
+      document.getElementById("timerBadge").textContent = "Completed ✓";
+      document.getElementById("timerBadge").className = "bg-emerald-500/20 text-emerald-300 px-2.5 py-1 rounded-full font-bold";
+      const btn = document.getElementById("toPayBtn");
+      btn.disabled = false;
+      btn.className = "w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold py-3.5 rounded-xl cursor-pointer transition";
+      btn.textContent = "Proceed to ₹1 UPI Payment →";
+    }
 
     async function verifyMobile() {
       const mobile = document.getElementById("mobileInput").value.trim();
@@ -152,20 +168,18 @@
       const video = document.getElementById("adVideo");
       video.src = activeCampaign.video_url;
       video.muted = true;
+      video.onended = () => unlockPaymentButton();
       video.play().catch(() => {});
 
       timerInterval = setInterval(() => {
-        if (!video.paused) {
+        if (!video.paused || video.ended) {
           watchedSeconds++;
-          const left = Math.max(0, 30 - watchedSeconds);
+          const target = video.duration && !isNaN(video.duration) ? Math.min(30, Math.ceil(video.duration)) : 30;
+          const left = Math.max(0, target - watchedSeconds);
           document.getElementById("timerBadge").textContent = left + "s remaining";
 
-          if (watchedSeconds >= 30) {
-            clearInterval(timerInterval);
-            const btn = document.getElementById("toPayBtn");
-            btn.disabled = false;
-            btn.className = "w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold py-3.5 rounded-xl cursor-pointer transition";
-            btn.textContent = "Proceed to ₹1 UPI Payment →";
+          if (watchedSeconds >= target || video.ended) {
+            unlockPaymentButton();
           }
         }
       }, 1000);
@@ -209,6 +223,10 @@
       document.getElementById("step4").classList.remove("hidden");
       document.getElementById("passCodeDisplay").textContent = passCode;
       document.getElementById("passMeta").textContent = `${currentMobile} • ${today}`;
+
+      setInterval(() => {
+        document.getElementById("liveClock").textContent = new Date().toLocaleTimeString();
+      }, 1000);
     }
   </script>
 </body>
