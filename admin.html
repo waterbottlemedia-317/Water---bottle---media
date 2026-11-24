@@ -3,45 +3,82 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Dashboard - Water Bottle Media</title>
+  <title>Water Bottle Media - Admin Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-950 text-white min-h-screen p-4">
 
-  <!-- PIN Lock -->
-  <div id="loginBox" class="max-w-sm mx-auto mt-16 bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-4">
-    <h1 class="text-lg font-bold text-sky-400">Water Bottle Media Admin</h1>
-    <p class="text-xs text-slate-400">Default PIN: 6379</p>
-    <input id="adminPin" type="password" inputmode="numeric" placeholder="Enter Admin PIN"
-      class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-lg" />
-    <button onclick="unlockAdmin()" class="w-full bg-sky-500 text-slate-950 font-bold py-3 rounded-xl">Unlock Dashboard</button>
+  <!-- PIN Login Screen -->
+  <div id="loginBox" class="max-w-sm mx-auto mt-20 bg-slate-900 border border-slate-800 rounded-3xl p-6 text-center space-y-4">
+    <span class="text-xs font-bold uppercase tracking-wider text-sky-400">Owner Access</span>
+    <h1 class="text-xl font-extrabold">Water Bottle Media</h1>
+    <input id="pinInput" type="password" maxlength="6" placeholder="Enter Admin PIN"
+      class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-center text-xl tracking-widest focus:outline-none focus:border-sky-500" />
+    <button onclick="checkPin()" class="w-full bg-sky-500 hover:bg-sky-600 text-slate-950 font-extrabold py-3 rounded-xl">
+      Unlock Dashboard
+    </button>
   </div>
 
-  <!-- Dashboard -->
-  <div id="dashboard" class="hidden max-w-lg mx-auto space-y-6">
-    <div class="flex justify-between items-center">
+  <!-- Main Admin Panel -->
+  <div id="dashboard" class="hidden max-w-2xl mx-auto space-y-6 pb-12">
+    <div class="flex justify-between items-center bg-slate-900 border border-slate-800 rounded-2xl p-4">
       <div>
-        <h1 class="text-xl font-extrabold">Campaign Manager</h1>
+        <h1 class="text-lg font-extrabold">Campaign Manager</h1>
         <p class="text-xs text-slate-400">Water Bottle Media • 6379025071</p>
       </div>
-      <button onclick="loadCampaigns()" class="text-xs bg-slate-800 px-3 py-1.5 rounded-lg">↻ Refresh</button>
+      <button onclick="loadDashboard()" class="bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-xl text-xs font-bold">↻ Refresh</button>
     </div>
 
-    <!-- Add New Video Brand -->
-    <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3">
-      <h2 class="text-sm font-bold text-sky-400">+ Add New Video Brand / YouTube</h2>
-      <input id="bName" placeholder="Brand / Channel Name" class="w-full bg-slate-800 rounded-lg px-3 py-2 text-sm" />
-      <input id="vUrl" placeholder="Direct MP4 Video Link (https://...)" class="w-full bg-slate-800 rounded-lg px-3 py-2 text-sm" />
-      <input id="cText" placeholder="Button Text (e.g., Subscribe on YouTube)" class="w-full bg-slate-800 rounded-lg px-3 py-2 text-sm" />
-      <input id="cUrl" placeholder="YouTube / WhatsApp Link" class="w-full bg-slate-800 rounded-lg px-3 py-2 text-sm" />
-      <input id="mViews" type="number" placeholder="Booked Views (e.g., 1000)" class="w-full bg-slate-800 rounded-lg px-3 py-2 text-sm" />
-      <button onclick="addCampaign()" class="w-full bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl text-sm">
+    <!-- Official Bottle Print QR Code Box -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col sm:flex-row items-center gap-4">
+      <div class="bg-white p-3 rounded-2xl shrink-0">
+        <img id="qrImg" crossorigin="anonymous"
+          src="https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=https://water-bottle-media.vercel.app"
+          alt="Bottle QR Code" class="w-32 h-32" />
+      </div>
+      <div class="text-center sm:text-left space-y-2 flex-1">
+        <span class="bg-emerald-500/20 text-emerald-400 text-[11px] font-bold px-2.5 py-0.5 rounded-full">Ready to Print</span>
+        <h2 class="font-bold text-base">Official Bottle Label QR Code</h2>
+        <p class="text-xs text-slate-400">Links directly to: <span class="text-sky-400">https://water-bottle-media.vercel.app</span></p>
+        <button onclick="downloadQR()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-xs px-4 py-2.5 rounded-xl">
+          ⬇ Download QR Image (PNG)
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="grid grid-cols-3 gap-3">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+        <p class="text-xs text-slate-400">Total Bottles</p>
+        <p id="statBottles" class="text-2xl font-black text-sky-400 mt-1">0</p>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+        <p class="text-xs text-slate-400">Customer ₹1</p>
+        <p id="statCustRev" class="text-2xl font-black text-emerald-400 mt-1">₹0</p>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+        <p class="text-xs text-slate-400">Ad Revenue</p>
+        <p id="statAdRev" class="text-2xl font-black text-amber-400 mt-1">₹0</p>
+      </div>
+    </div>
+
+    <!-- Add New Sponsor / YouTube Campaign -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+      <h2 class="font-bold text-sm text-sky-400">+ Add New Video Brand / YouTube</h2>
+      <input id="brandName" placeholder="Brand / Channel Name (e.g. Raja Mobiles)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm" />
+      <input id="videoUrl" placeholder="Direct MP4 Video Link (https://files.catbox.moe/...mp4)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm" />
+      <div class="grid grid-cols-2 gap-3">
+        <input id="ctaText" value="Subscribe on YouTube" placeholder="Button Text" class="bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm" />
+        <input id="ctaUrl" placeholder="Full Link (https://youtube.com/...)" class="bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm" />
+      </div>
+      <input id="maxViews" type="number" value="1000" placeholder="Booked Views (e.g. 1000)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm" />
+      <button onclick="addCampaign()" class="w-full bg-sky-500 hover:bg-sky-600 text-slate-950 font-extrabold py-3 rounded-xl text-sm">
         Launch Campaign
       </button>
     </div>
 
-    <!-- Live Campaigns List -->
+    <!-- Active Campaigns List -->
     <div id="campaignList" class="space-y-3"></div>
   </div>
 
@@ -52,56 +89,72 @@
 
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    function unlockAdmin() {
-      if (document.getElementById("adminPin").value === ADMIN_PIN) {
+    function checkPin() {
+      if (document.getElementById("pinInput").value === ADMIN_PIN) {
         document.getElementById("loginBox").classList.add("hidden");
         document.getElementById("dashboard").classList.remove("hidden");
-        loadCampaigns();
+        loadDashboard();
       } else {
         alert("Wrong PIN");
       }
     }
 
-    async function loadCampaigns() {
-      const { data } = await db.from("campaigns").select("*").order("id", { ascending: false });
+    async function downloadQR() {
+      const img = document.getElementById("qrImg");
+      const res = await fetch(img.src);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "water-bottle-media-qr.png";
+      a.click();
+    }
+
+    async function loadDashboard() {
+      const { data: campaigns } = await db.from("campaigns").select("*").order("id", { ascending: false });
+      const { data: claims } = await db.from("claims").select("*");
+
+      const totalBottles = claims ? claims.length : 0;
+      document.getElementById("statBottles").textContent = totalBottles;
+      document.getElementById("statCustRev").textContent = "₹" + totalBottles;
+      document.getElementById("statAdRev").textContent = "₹" + (totalBottles * 2);
+
       const list = document.getElementById("campaignList");
       list.innerHTML = "";
-
-      data.forEach(c => {
-        const rev = c.views_count * 1;
+      (campaigns || []).forEach(c => {
         list.innerHTML += `
-          <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex justify-between items-center">
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex justify-between items-center">
             <div>
               <p class="font-bold text-sm">${c.brand_name}</p>
-              <p class="text-xs text-slate-400">Views: <span class="text-white font-bold">${c.views_count} / ${c.max_views}</span> (₹${rev})</p>
+              <p class="text-xs text-slate-400">Views: ${c.views_count || 0} / ${c.max_views}</p>
             </div>
-            <button onclick="toggleStatus(${c.id}, ${!c.is_active})"
+            <button onclick="toggleCampaign(${c.id}, ${c.is_active})"
               class="px-3 py-1.5 rounded-lg text-xs font-bold ${c.is_active ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}">
               ${c.is_active ? 'ACTIVE' : 'PAUSED'}
             </button>
-          </div>
-        `;
+          </div>`;
       });
     }
 
     async function addCampaign() {
-      const payload = {
-        brand_name: document.getElementById("bName").value,
-        offer_title: "30s Video Promo",
-        video_url: document.getElementById("vUrl").value,
-        cta_text: document.getElementById("cText").value || "Subscribe on YouTube",
-        cta_url: document.getElementById("cUrl").value,
-        max_views: parseInt(document.getElementById("mViews").value) || 1000,
-        is_active: true
-      };
-      await db.from("campaigns").insert([payload]);
+      const brand_name = document.getElementById("brandName").value.trim();
+      const video_url = document.getElementById("videoUrl").value.trim();
+      const cta_text = document.getElementById("ctaText").value.trim();
+      const cta_url = document.getElementById("ctaUrl").value.trim();
+      const max_views = parseInt(document.getElementById("maxViews").value) || 1000;
+
+      if (!brand_name || !video_url) return alert("Enter Brand Name and MP4 Video URL");
+
+      await db.from("campaigns").insert([{
+        brand_name, offer_title: "30s Video Promo", video_url, cta_text, cta_url, max_views, views_count: 0, is_active: true
+      }]);
       alert("Campaign Launched!");
-      loadCampaigns();
+      loadDashboard();
     }
 
-    async function toggleStatus(id, newStatus) {
-      await db.from("campaigns").update({ is_active: newStatus }).eq("id", id);
-      loadCampaigns();
+    async function toggleCampaign(id, current) {
+      await db.from("campaigns").update({ is_active: !current }).eq("id", id);
+      loadDashboard();
     }
   </script>
 </body>
