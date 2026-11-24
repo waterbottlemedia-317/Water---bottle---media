@@ -3,158 +3,226 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Water Bottle Media - Admin Dashboard</title>
+  <title>Water Bottle Media - Get Bottle @ ₹1</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-slate-950 text-white min-h-screen p-4">
+<body class="bg-slate-950 text-white min-h-screen flex items-center justify-center p-4">
 
-  <!-- PIN Login Screen -->
-  <div id="loginBox" class="max-w-sm mx-auto mt-20 bg-slate-900 border border-slate-800 rounded-3xl p-6 text-center space-y-4">
-    <span class="text-xs font-bold uppercase tracking-wider text-sky-400">Owner Access</span>
-    <h1 class="text-xl font-extrabold">Water Bottle Media</h1>
-    <input id="pinInput" type="password" maxlength="6" placeholder="Enter Admin PIN"
-      class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-center text-xl tracking-widest focus:outline-none focus:border-sky-500" />
-    <button onclick="checkPin()" class="w-full bg-sky-500 hover:bg-sky-600 text-slate-950 font-extrabold py-3 rounded-xl">
-      Unlock Dashboard
-    </button>
-  </div>
-
-  <!-- Main Admin Panel -->
-  <div id="dashboard" class="hidden max-w-2xl mx-auto space-y-6 pb-12">
-    <div class="flex justify-between items-center bg-slate-900 border border-slate-800 rounded-2xl p-4">
+  <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl">
+    <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-lg font-extrabold">Campaign Manager</h1>
-        <p class="text-xs text-slate-400">Water Bottle Media • 6379025071</p>
+        <span class="text-xs font-bold uppercase tracking-wider text-sky-400">Water Bottle Media</span>
+        <h1 class="text-xl font-extrabold">500ml Bottle @ ₹1</h1>
       </div>
-      <button onclick="loadDashboard()" class="bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-xl text-xs font-bold">↻ Refresh</button>
+      <span class="bg-emerald-500/20 text-emerald-400 text-xs font-bold px-3 py-1 rounded-full">100% Pure</span>
     </div>
 
-    <!-- Official Bottle Print QR Code Box -->
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col sm:flex-row items-center gap-4">
-      <div class="bg-white p-3 rounded-2xl shrink-0">
-        <img id="qrImg" crossorigin="anonymous"
-          src="https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=https://water-bottle-media.vercel.app"
-          alt="Bottle QR Code" class="w-32 h-32" />
-      </div>
-      <div class="text-center sm:text-left space-y-2 flex-1">
-        <span class="bg-emerald-500/20 text-emerald-400 text-[11px] font-bold px-2.5 py-0.5 rounded-full">Ready to Print</span>
-        <h2 class="font-bold text-base">Official Bottle Label QR Code</h2>
-        <p class="text-xs text-slate-400">Links directly to: <span class="text-sky-400">https://water-bottle-media.vercel.app</span></p>
-        <button onclick="downloadQR()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-xs px-4 py-2.5 rounded-xl">
-          ⬇ Download QR Image (PNG)
-        </button>
-      </div>
-    </div>
-
-    <!-- Stats Row -->
-    <div class="grid grid-cols-3 gap-3">
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-        <p class="text-xs text-slate-400">Total Bottles</p>
-        <p id="statBottles" class="text-2xl font-black text-sky-400 mt-1">0</p>
-      </div>
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-        <p class="text-xs text-slate-400">Customer ₹1</p>
-        <p id="statCustRev" class="text-2xl font-black text-emerald-400 mt-1">₹0</p>
-      </div>
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-        <p class="text-xs text-slate-400">Ad Revenue</p>
-        <p id="statAdRev" class="text-2xl font-black text-amber-400 mt-1">₹0</p>
-      </div>
-    </div>
-
-    <!-- Add New Sponsor / YouTube Campaign -->
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
-      <h2 class="font-bold text-sm text-sky-400">+ Add New Video Brand / YouTube</h2>
-      <input id="brandName" placeholder="Brand / Channel Name (e.g. Raja Mobiles)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm" />
-      <input id="videoUrl" placeholder="Direct MP4 Video Link (https://files.catbox.moe/...mp4)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm" />
-      <div class="grid grid-cols-2 gap-3">
-        <input id="ctaText" value="Subscribe on YouTube" placeholder="Button Text" class="bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm" />
-        <input id="ctaUrl" placeholder="Full Link (https://youtube.com/...)" class="bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm" />
-      </div>
-      <input id="maxViews" type="number" value="1000" placeholder="Booked Views (e.g. 1000)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm" />
-      <button onclick="addCampaign()" class="w-full bg-sky-500 hover:bg-sky-600 text-slate-950 font-extrabold py-3 rounded-xl text-sm">
-        Launch Campaign
+    <div id="step1" class="space-y-4">
+      <p class="text-sm text-slate-300">Enter your 10-digit mobile number to unlock today's ₹1 bottle pass (Limit: 1 bottle/day).</p>
+      <input id="mobileInput" type="tel" maxlength="10" placeholder="Enter 10-digit mobile number"
+        class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-lg tracking-wider focus:outline-none focus:border-sky-500" />
+      <p id="errorMsg" class="text-rose-400 text-xs hidden"></p>
+      <button onclick="verifyMobile()" id="verifyBtn"
+        class="w-full bg-sky-500 hover:bg-sky-600 text-slate-950 font-extrabold py-3.5 rounded-xl transition">
+        Continue to 30s Video →
       </button>
     </div>
 
-    <!-- Active Campaigns List -->
-    <div id="campaignList" class="space-y-3"></div>
+    <div id="step2" class="hidden space-y-4">
+      <div class="flex justify-between items-center text-xs">
+        <span id="brandBadge" class="text-sky-400 font-bold">Sponsored Ad</span>
+        <span id="timerBadge" class="bg-amber-500/20 text-amber-300 px-2.5 py-1 rounded-full font-bold">30s remaining</span>
+      </div>
+
+      <div class="relative rounded-2xl overflow-hidden bg-black aspect-video border border-slate-700">
+        <video id="adVideo" playsinline webkit-playsinline muted preload="auto" class="w-full h-full object-cover"></video>
+        <button id="soundBtn" onclick="enableSound()"
+          class="absolute bottom-3 right-3 bg-black/75 text-white text-xs font-bold px-3 py-1.5 rounded-full border border-white/20">
+          🔊 Tap for Sound
+        </button>
+      </div>
+
+      <a id="ctaLink" href="#" target="_blank"
+        class="block w-full text-center bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl text-sm transition">
+        ▶ Subscribe on YouTube
+      </a>
+
+      <button id="toPayBtn" disabled onclick="goToPayment()"
+        class="w-full bg-slate-700 text-slate-400 font-extrabold py-3.5 rounded-xl cursor-not-allowed transition">
+        Watch Full Video to Unlock ₹1 Pay
+      </button>
+    </div>
+
+    <div id="step3" class="hidden space-y-4 text-center">
+      <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4">
+        <p class="text-emerald-400 font-bold text-sm">Video Completed! ₹1 Offer Unlocked</p>
+        <p class="text-3xl font-black mt-1">₹1.00</p>
+      </div>
+      <a id="upiPayLink" href="#" onclick="showVoucherAfterDelay()"
+        class="block w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold py-4 rounded-xl text-base transition">
+        Pay ₹1 via GPay / PhonePe / Paytm
+      </a>
+      <button onclick="completeClaim()" class="text-xs text-slate-400 underline">
+        Already paid ₹1? Tap here to generate Pass
+      </button>
+    </div>
+
+    <div id="step4" class="hidden text-center space-y-4">
+      <div class="bg-gradient-to-br from-sky-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg">
+        <div class="flex justify-between items-center text-[11px] uppercase tracking-wider opacity-90 mb-2">
+          <span>Verified Pass</span>
+          <span id="liveClock" class="bg-black/30 px-2 py-0.5 rounded font-mono font-bold">--:--:--</span>
+        </div>
+        <p id="passCodeDisplay" class="text-5xl font-black tracking-widest my-3">----</p>
+        <p id="passMeta" class="text-xs opacity-90 font-semibold"></p>
+      </div>
+      <p class="text-xs text-slate-400">Show this live running screen + ₹1 payment tick at counter.</p>
+    </div>
+
+    <div class="mt-6 pt-4 border-t border-slate-800 text-center text-[11px] text-slate-500">
+      Powered by Water Bottle Media • For Ads: 6379025071
+    </div>
   </div>
 
   <script>
     const SUPABASE_URL = "https://todgaupejlrckrqfntih.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_8Q6QGQc1PPYs0QcoYXpQdg_nBT0HGSo";
-    const ADMIN_PIN = "6379";
+    const MY_UPI_ID = "sujivj317@okhdfcbank";
 
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let currentMobile = "";
+    let activeCampaign = null;
+    let watchedSeconds = 0;
+    let timerInterval = null;
+    let unlocked = false;
 
-    function checkPin() {
-      if (document.getElementById("pinInput").value === ADMIN_PIN) {
-        document.getElementById("loginBox").classList.add("hidden");
-        document.getElementById("dashboard").classList.remove("hidden");
-        loadDashboard();
-      } else {
-        alert("Wrong PIN");
+    function unlockPaymentButton() {
+      if (unlocked) return;
+      unlocked = true;
+      clearInterval(timerInterval);
+      document.getElementById("timerBadge").textContent = "Completed ✓";
+      document.getElementById("timerBadge").className = "bg-emerald-500/20 text-emerald-300 px-2.5 py-1 rounded-full font-bold";
+      const btn = document.getElementById("toPayBtn");
+      btn.disabled = false;
+      btn.className = "w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold py-3.5 rounded-xl cursor-pointer transition";
+      btn.textContent = "Proceed to ₹1 UPI Payment →";
+    }
+
+    async function verifyMobile() {
+      const mobile = document.getElementById("mobileInput").value.trim();
+      const err = document.getElementById("errorMsg");
+      if (!/^[6-9]\d{9}$/.test(mobile)) {
+        err.textContent = "Please enter a valid 10-digit Indian mobile number.";
+        err.classList.remove("hidden");
+        return;
       }
+      err.classList.add("hidden");
+      document.getElementById("verifyBtn").textContent = "Checking...";
+
+      const today = new Date().toISOString().split("T")[0];
+      const { data: existing } = await db
+        .from("claims")
+        .select("*")
+        .eq("mobile_number", mobile)
+        .eq("claim_date", today);
+
+      if (existing && existing.length > 0) {
+        err.textContent = "Daily limit reached! You already claimed today's ₹1 bottle.";
+        err.classList.remove("hidden");
+        document.getElementById("verifyBtn").textContent = "Continue to 30s Video →";
+        return;
+      }
+
+      const { data: campaigns } = await db
+        .from("campaigns")
+        .select("*")
+        .eq("is_active", true)
+        .order("id", { ascending: false });
+
+      activeCampaign = campaigns?.find(c => (c.views_count || 0) < c.max_views);
+      if (!activeCampaign) {
+        err.textContent = "No active ad campaigns right now. Please try shortly.";
+        err.classList.remove("hidden");
+        document.getElementById("verifyBtn").textContent = "Continue to 30s Video →";
+        return;
+      }
+
+      currentMobile = mobile;
+      startVideoStep();
     }
 
-    async function downloadQR() {
-      const img = document.getElementById("qrImg");
-      const res = await fetch(img.src);
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "water-bottle-media-qr.png";
-      a.click();
+    function startVideoStep() {
+      document.getElementById("step1").classList.add("hidden");
+      document.getElementById("step2").classList.remove("hidden");
+
+      document.getElementById("brandBadge").textContent = "Ad: " + activeCampaign.brand_name;
+      const cta = document.getElementById("ctaLink");
+      cta.textContent = "▶ " + activeCampaign.cta_text;
+      cta.href = activeCampaign.cta_url;
+
+      const video = document.getElementById("adVideo");
+      video.src = activeCampaign.video_url;
+      video.muted = true;
+      video.onended = () => unlockPaymentButton();
+      video.play().catch(() => {});
+
+      timerInterval = setInterval(() => {
+        if (!video.paused || video.ended) {
+          watchedSeconds++;
+          const target = video.duration && !isNaN(video.duration) ? Math.min(30, Math.ceil(video.duration)) : 30;
+          const left = Math.max(0, target - watchedSeconds);
+          document.getElementById("timerBadge").textContent = left + "s remaining";
+
+          if (watchedSeconds >= target || video.ended) {
+            unlockPaymentButton();
+          }
+        }
+      }, 1000);
     }
 
-    async function loadDashboard() {
-      const { data: campaigns } = await db.from("campaigns").select("*").order("id", { ascending: false });
-      const { data: claims } = await db.from("claims").select("*");
-
-      const totalBottles = claims ? claims.length : 0;
-      document.getElementById("statBottles").textContent = totalBottles;
-      document.getElementById("statCustRev").textContent = "₹" + totalBottles;
-      document.getElementById("statAdRev").textContent = "₹" + (totalBottles * 2);
-
-      const list = document.getElementById("campaignList");
-      list.innerHTML = "";
-      (campaigns || []).forEach(c => {
-        list.innerHTML += `
-          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex justify-between items-center">
-            <div>
-              <p class="font-bold text-sm">${c.brand_name}</p>
-              <p class="text-xs text-slate-400">Views: ${c.views_count || 0} / ${c.max_views}</p>
-            </div>
-            <button onclick="toggleCampaign(${c.id}, ${c.is_active})"
-              class="px-3 py-1.5 rounded-lg text-xs font-bold ${c.is_active ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}">
-              ${c.is_active ? 'ACTIVE' : 'PAUSED'}
-            </button>
-          </div>`;
-      });
+    function enableSound() {
+      const video = document.getElementById("adVideo");
+      video.muted = false;
+      video.play();
+      document.getElementById("soundBtn").classList.add("hidden");
     }
 
-    async function addCampaign() {
-      const brand_name = document.getElementById("brandName").value.trim();
-      const video_url = document.getElementById("videoUrl").value.trim();
-      const cta_text = document.getElementById("ctaText").value.trim();
-      const cta_url = document.getElementById("ctaUrl").value.trim();
-      const max_views = parseInt(document.getElementById("maxViews").value) || 1000;
+    function goToPayment() {
+      document.getElementById("step2").classList.add("hidden");
+      document.getElementById("step3").classList.remove("hidden");
 
-      if (!brand_name || !video_url) return alert("Enter Brand Name and MP4 Video URL");
+      const upiUrl = `upi://pay?pa=${encodeURIComponent(MY_UPI_ID)}&pn=WaterBottleMedia&am=1.00&cu=INR&tn=Bottle_${currentMobile}`;
+      document.getElementById("upiPayLink").href = upiUrl;
+    }
 
-      await db.from("campaigns").insert([{
-        brand_name, offer_title: "30s Video Promo", video_url, cta_text, cta_url, max_views, views_count: 0, is_active: true
+    function showVoucherAfterDelay() {
+      setTimeout(() => { completeClaim(); }, 4000);
+    }
+
+    async function completeClaim() {
+      const passCode = Math.floor(1000 + Math.random() * 9000).toString();
+      const today = new Date().toISOString().split("T")[0];
+
+      await db.from("claims").insert([{
+        mobile_number: currentMobile,
+        claim_date: today,
+        campaign_id: activeCampaign.id,
+        pass_code: passCode
       }]);
-      alert("Campaign Launched!");
-      loadDashboard();
-    }
 
-    async function toggleCampaign(id, current) {
-      await db.from("campaigns").update({ is_active: !current }).eq("id", id);
-      loadDashboard();
+      await db.from("campaigns")
+        .update({ views_count: (activeCampaign.views_count || 0) + 1 })
+        .eq("id", activeCampaign.id);
+
+      document.getElementById("step3").classList.add("hidden");
+      document.getElementById("step4").classList.remove("hidden");
+      document.getElementById("passCodeDisplay").textContent = passCode;
+      document.getElementById("passMeta").textContent = `${currentMobile} • ${today}`;
+
+      setInterval(() => {
+        document.getElementById("liveClock").textContent = new Date().toLocaleTimeString();
+      }, 1000);
     }
   </script>
 </body>
